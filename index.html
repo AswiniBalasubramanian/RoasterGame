@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#050609" />
+
+    <!-- search -->
+    <title>roadster.game: Fly a Flying Roadster from Earth to Mars | Free 3D Browser Game</title>
+    <meta name="description" content="roadster.game is a free 3D browser game. Lift a two-seat flying roadster off a night desert, then fly it through ring gates and an asteroid field from Earth orbit to Mars. No download, built with Three.js." />
+    <meta name="author" content="Aswini" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://roadster.game/" />
+    <link rel="author" href="https://www.linkedin.com/in/iam-aswini" />
+
+    <!-- social previews -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="roadster.game" />
+    <meta property="og:url" content="https://roadster.game/" />
+    <meta property="og:title" content="roadster.game: fly a roadster from Earth to Mars" />
+    <meta property="og:description" content="A free 3D browser game. Lift off the desert, race ring gates through an asteroid field and arrive in Mars orbit." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="roadster.game: fly a roadster from Earth to Mars" />
+    <meta name="twitter:description" content="A free 3D browser game. Lift off the desert, race ring gates through an asteroid field and arrive in Mars orbit." />
+
+    <!-- structured data: what the site is, who built it, and direct answers for answer engines -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Person",
+            "@id": "https://roadster.game/#aswini",
+            "name": "Aswini",
+            "url": "https://www.linkedin.com/in/iam-aswini",
+            "sameAs": ["https://www.linkedin.com/in/iam-aswini"]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://roadster.game/#website",
+            "url": "https://roadster.game/",
+            "name": "roadster.game",
+            "inLanguage": "en",
+            "creator": { "@id": "https://roadster.game/#aswini" }
+          },
+          {
+            "@type": "VideoGame",
+            "@id": "https://roadster.game/#game",
+            "name": "roadster.game: The Mars Run",
+            "url": "https://roadster.game/",
+            "description": "A free 3D browser game: fly a two-seat flying roadster from Earth orbit to Mars through ring gates and an asteroid field.",
+            "genre": ["Racing", "Flight", "Arcade"],
+            "gamePlatform": ["Web browser", "Desktop", "Mobile"],
+            "applicationCategory": "Game",
+            "operatingSystem": "Any (WebGL browser)",
+            "playMode": "SinglePlayer",
+            "numberOfPlayers": { "@type": "QuantitativeValue", "value": 1 },
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "author": { "@id": "https://roadster.game/#aswini" },
+            "creator": { "@id": "https://roadster.game/#aswini" }
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://roadster.game/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is roadster.game?",
+                "acceptedAnswer": { "@type": "Answer", "text": "roadster.game is a free 3D browser game where you fly a two-seat flying roadster from Earth orbit to Mars. It runs in any WebGL browser with no download." }
+              },
+              {
+                "@type": "Question",
+                "name": "How do you play the Mars Run?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Fly through the ring gates from the launch gate above Earth to the arrival gate in Mars orbit. W and S control thrust, A and D steer, the up and down arrows climb and dive, Shift boosts and Space is the air-brake. Boost rings along the course give extra speed." }
+              },
+              {
+                "@type": "Question",
+                "name": "Is roadster.game free?",
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is free to play in the browser on desktop and mobile, with touch controls on phones." }
+              },
+              {
+                "@type": "Question",
+                "name": "Who built roadster.game?",
+                "acceptedAnswer": { "@type": "Answer", "text": "roadster.game was designed and built by Aswini (linkedin.com/in/iam-aswini) with React, Three.js and React Three Fiber." }
+              },
+              {
+                "@type": "Question",
+                "name": "Is roadster.game affiliated with Tesla or any carmaker?",
+                "acceptedAnswer": { "@type": "Answer", "text": "No. It is an independent prototype. The vehicle and world are original work." }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+
+    <!-- dark, readable first paint before the app bundle loads (no white flash) -->
+    <style>
+      html, body { margin: 0; background: #050609; color: #d0d1d2; font: 16px/1.6 system-ui, sans-serif; }
+      .prerender { max-width: 640px; margin: 18vh auto; padding: 0 16px; }
+      .prerender h1 { color: #f5f7fa; font-weight: 500; line-height: 1.15; }
+      .prerender a { color: #f5f7fa; }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,200..700&display=swap" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23050609'/%3E%3Cpath d='M2 24.6C2.5 22.6 5 21.6 9.5 21l6-.6c2.2-2.2 5.2-3.5 9-3.6 4.6 0 8.4 1.8 11.6 3.8l2.4.8.4 3.2Z' fill='%23f5f7fa'/%3E%3Ccircle cx='10.5' cy='25' r='3.4' fill='%23050609'/%3E%3Ccircle cx='10.5' cy='25' r='2.4' fill='%23f5f7fa'/%3E%3Ccircle cx='30.5' cy='25' r='3.4' fill='%23050609'/%3E%3Ccircle cx='30.5' cy='25' r='2.4' fill='%23f5f7fa'/%3E%3Crect x='36.4' y='21.2' width='2.6' height='1.3' rx='.5' fill='%23E82127'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- crawlable content for bots that don't run JavaScript; React replaces it on load -->
+      <main class="prerender">
+        <h1>roadster.game: fly a roadster from Earth to Mars</h1>
+        <p>A free 3D browser game. A two-seat roadster with hidden aero, ground-effect fans and cold-gas thrusters lifts off a night desert and climbs into orbit. Then fly the Mars Run: through ring gates and an asteroid field, from the launch gate above Earth to the arrival gate in Mars orbit.</p>
+        <h2>How to play</h2>
+        <p>W and S: thrust. A and D: steer. Up and down arrows: climb and dive. Shift: boost. Space: air-brake. Esc: pause. Touch controls on phones.</p>
+        <h2>Vehicles</h2>
+        <p>Street, Thrust and Flight variants, with a finish studio for paint colour, metallic, clearcoat and wheel finish.</p>
+        <p>Built by <a href="https://www.linkedin.com/in/iam-aswini" rel="author">Aswini</a>. An independent prototype, not affiliated with any automaker.</p>
+      </main>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

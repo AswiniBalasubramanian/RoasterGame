@@ -1,0 +1,23 @@
+# roadster.game
+
+> A free 3D browser game: fly a two-seat flying roadster from Earth orbit to Mars. Built by Aswini (https://www.linkedin.com/in/iam-aswini).
+
+## What it is
+- Landing page: a silver two-seat roadster hovers on four lift modules above a night desert, then climbs into orbit as you scroll.
+- The Mars Run: a one-way flight course from a launch gate above Earth, through ring gates and an asteroid field, to an arrival gate in Mars orbit. The HUD counts down the 54.6 million km to Mars.
+- Vehicles: Street, Thrust and Flight variants; a finish studio for paint colour, metallic, roughness, clearcoat and wheel finish; .glb export.
+
+## How to play
+- W / S: thrust and brake
+- A / D: steer
+- Up / Down arrows: climb and dive
+- Shift: boost (fly through red boost rings to recharge)
+- Space: air-brake
+- Esc: pause
+- Phones: on-screen touch controls
+
+## Facts
+- Free, no download, runs in any WebGL browser on desktop and mobile.
+- Built with React, TypeScript, Three.js and React Three Fiber.
+- Independent prototype, not affiliated with Tesla or any automaker. Vehicle and world are original work.
+- Author: Aswini, https://www.linkedin.com/in/iam-aswini
