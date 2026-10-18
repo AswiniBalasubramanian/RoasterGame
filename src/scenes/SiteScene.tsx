@@ -50,6 +50,17 @@ export function SiteScene() {
   const reduce = useMemo(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches, [])
   // ?poster: a still, art-directed frame for social images (doors open, low rear three-quarter)
   const poster = useMemo(() => new URLSearchParams(location.search).has('poster'), [])
+  // ?poster&ground: the reference photo, parked on the desert floor under the Milky Way, lift systems off
+  const grounded = useMemo(() => poster && new URLSearchParams(location.search).has('ground'), [poster])
+  /** Milky Way arcs up through the middle of the poster frame: band normal is perpendicular to the view, tilted */
+  const band = useMemo<[number, number, number]>(() => {
+    const q = new URLSearchParams(location.search)
+    const n = (k: string, d: number) => (q.has(k) ? parseFloat(q.get(k)!) : d)
+    const dir = new THREE.Vector3(n('lx', 0.6) - n('cx', 6.4), 0, n('lz', -0.3) - n('cz', -5.6)).normalize()
+    const nrm = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize()
+    nrm.addScaledVector(dir, 0.35).add(new THREE.Vector3(0, 0.22, 0)).normalize()
+    return nrm.toArray() as [number, number, number]
+  }, [])
   const lift = useRef(0)
   const carPos = useRef(new THREE.Vector3())
   const shadow = useRef<THREE.Group>(null)
@@ -116,7 +127,7 @@ export function SiteScene() {
     const rt = THREE.MathUtils.clamp((now - (t0.current ?? now)) / 4200, 0, 1)
     const el = state.clock.elapsedTime
     const fall = 1 - easeOutExpo(rt)
-    const carY = HOVER + fall * 9 + Math.sin(el * 1.3) * 0.035 + Math.sin(el * 0.47) * 0.02
+    const carY = grounded ? 0 : HOVER + fall * 9 + Math.sin(el * 1.3) * 0.035 + Math.sin(el * 0.47) * 0.02
 
     // lift-off: scrolling out of the hero climbs off the desert floor into space.
     // The car stays put for the camera; the world drops away beneath it.
@@ -141,6 +152,7 @@ export function SiteScene() {
     lift.current = THREE.MathUtils.damp(lift.current, (0.55 + fall * 0.45 + Math.sin(el * 7) * 0.04) * (1 - space.current * 0.85) + Math.min(0.45, climbRate * 1.5), 6, dt)
     dust.current = lift.current * Math.max(0, 1 - climb * 4)
     control.current.lift = lift.current
+    if (grounded) { lift.current = 0; dust.current = 0; control.current.lift = 0 }
     control.current.boost = THREE.MathUtils.damp(control.current.boost, Math.min(1, climbRate * 2.5), 8, dt)
     control.current.spin = 0
     // tail lamps power up as the car settles
@@ -225,7 +237,7 @@ export function SiteScene() {
   return (
     <>
       <fogExp2 ref={fog} attach="fog" args={[FOG, 0.0105]} />
-      <Sky space={space} />
+      <Sky space={space} boost={grounded ? 2.7 : 1} band={grounded ? band : undefined} />
       <DesertReflections intensity={1.35} />
       {/* key: soft cool moonlight high front-left, the only shadow caster */}
       <directionalLight
@@ -259,10 +271,48 @@ export function SiteScene() {
       </group>
 
       <group ref={carRef}>
-        <Car paint={paint} variant={variantId} control={control} shadows={quality !== 'low'} beam={HOVER + 0.2} gas groundY={groundY} />
+        <Car
+          paint={grounded ? '#e7e9ec' : paint} variant={variantId} control={control} shadows={quality !== 'low'} beam={HOVER + 0.2} gas groundY={groundY}
+          finishOverride={grounded ? { metalness: 0.22, roughness: 0.3, clearcoat: 1, flake: 0.06, iridescence: 0 } : undefined}
+        />
         {/* taillight spill on the dust behind */}
         <pointLight position={[0, -0.3, -3.6]} color="#ff2a22" intensity={3.2} distance={7} decay={2} />
       </group>
+      {grounded && <PhotoExtras />}
     </>
+  )
+}
+
+let glowTex: THREE.Texture | null = null
+function glow() {
+  if (glowTex) return glowTex
+  const c = document.createElement('canvas'); c.width = c.height = 128
+  const x = c.getContext('2d')!
+  const g = x.createRadialGradient(64, 64, 0, 64, 64, 64)
+  g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.18, 'rgba(255,255,255,0.55)'); g.addColorStop(0.5, 'rgba(255,255,255,0.12)'); g.addColorStop(1, 'rgba(255,255,255,0)')
+  x.fillStyle = g; x.fillRect(0, 0, 128, 128)
+  glowTex = new THREE.CanvasTexture(c)
+  return glowTex
+}
+
+/** Photo shot only: red tail-light haze over the dust behind the car, and Mars as a bright point high in the frame. */
+function PhotoExtras() {
+  const mars = useRef<THREE.Sprite>(null)
+  const v = useMemo(() => new THREE.Vector3(), [])
+  useFrame(({ camera }) => {
+    if (!mars.current) return
+    v.set(-0.74, 0.8, 0.5).unproject(camera).sub(camera.position).normalize()
+    mars.current.position.copy(camera.position).addScaledVector(v, 300)
+  })
+  return (
+    <group>
+      <pointLight position={[0, 0.55, -3.1]} color="#ff2a22" intensity={4.2} distance={8} decay={2} />
+      <sprite position={[0.2, 0.7, -3.9]} scale={[8.5, 2.6, 1]}>
+        <spriteMaterial map={glow()} color="#ff3a24" transparent opacity={0.3} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} />
+      </sprite>
+      <sprite ref={mars} scale={[4.2, 4.2, 1]}>
+        <spriteMaterial map={glow()} color="#ffcf9e" transparent opacity={0.95} blending={THREE.AdditiveBlending} depthWrite={false} fog={false} toneMapped={false} />
+      </sprite>
+    </group>
   )
 }

@@ -21,7 +21,7 @@ const skyVert = /* glsl */ `
 const skyFrag = /* glsl */ `
   precision highp float;
   varying vec3 vDir;
-  uniform vec3 uGlowDir; uniform float uTime; uniform float uSpace;
+  uniform vec3 uGlowDir; uniform float uTime; uniform float uSpace; uniform float uBoost; uniform vec3 uBand;
 
   float hash(vec3 p){ p = fract(p*0.3183099 + .1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
   float noise(vec3 x){
@@ -61,26 +61,36 @@ const skyFrag = /* glsl */ `
     col += vec3(0.30, 0.10, 0.06) * pow(az, 2.0) * exp(-max(h, 0.0) * 6.0) * 0.08 * ground;
 
     // milky way: a tilted band with mottled clouds and a dark dust lane
-    vec3 N = normalize(vec3(0.85, 0.35, 0.4));
+    vec3 N = normalize(uBand);
     float bd = dot(d, N);
     float band = exp(-bd * bd * 22.0);
     float cloud = fbm(d * 7.0 + 2.0);
     float fine = fbm(d * 24.0);
     float lane = exp(-pow(bd - 0.025 + (cloud - 0.5) * 0.05, 2.0) * 900.0);
     float mw = band * smoothstep(0.3, 0.85, cloud) * (0.5 + fine * 0.7) * (1.0 - lane * 0.8);
-    col += mix(vec3(0.14, 0.14, 0.2), vec3(0.3, 0.25, 0.22), cloud) * mw * (0.22 + uSpace * 0.3) * mix(smoothstep(0.02, 0.3, h), 1.0, uSpace);
+    col += mix(vec3(0.14, 0.14, 0.2), vec3(0.3, 0.25, 0.22), cloud) * mw * (0.22 + uSpace * 0.3) * uBoost * mix(smoothstep(0.02, 0.3, h), 1.0, uSpace);
 
     // stars, denser inside the band
-    float s = stars(d, 420.0, 0.982 - band * 0.03) * 2.2 + stars(d, 170.0, 0.993) * 3.2 + stars(d, 900.0, 0.965 - band * 0.06) * 0.9;
-    col += vec3(0.95, 0.96, 1.0) * s * (1.0 + uSpace * 0.6) * mix(smoothstep(-0.01, 0.12, h), 1.0, uSpace);
+    float dense = (uBoost - 1.0) * 0.008;
+    float s = stars(d, 420.0, 0.982 - band * 0.03 - dense) * 2.2 + stars(d, 170.0, 0.993 - dense * 0.5) * 3.2 + stars(d, 900.0, 0.965 - band * 0.06 - dense) * 0.9;
+    col += vec3(0.95, 0.96, 1.0) * s * (1.0 + uSpace * 0.6) * (0.7 + uBoost * 0.3) * mix(smoothstep(-0.01, 0.12, h), 1.0, uSpace);
 
     gl_FragColor = vec4(col, 1.0);
     #include <colorspace_fragment>
   }`
 
 /** `space` 0..1 fades the desert dusk into open space (no horizon glow, more stars). */
-export function Sky({ space }: { space?: MutableRefObject<number> }) {
-  const uniforms = useMemo(() => ({ uGlowDir: { value: GLOW_DIR.clone() }, uTime: { value: 0 }, uSpace: { value: 0 } }), [])
+/**
+ * `space` 0..1 fades the desert dusk into open space (no horizon glow, more stars).
+ * `boost` thickens the star field and Milky Way; `band` is the normal of the Milky Way's great circle.
+ */
+export function Sky({ space, boost = 1, band = [0.85, 0.35, 0.4] }: { space?: MutableRefObject<number>; boost?: number; band?: [number, number, number] }) {
+  const uniforms = useMemo(
+    () => ({ uGlowDir: { value: GLOW_DIR.clone() }, uTime: { value: 0 }, uSpace: { value: 0 }, uBoost: { value: boost }, uBand: { value: new THREE.Vector3(...band) } }),
+    [], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+  uniforms.uBoost.value = boost
+  uniforms.uBand.value.set(...band)
   useFrame((_, dt) => {
     uniforms.uTime.value += dt
     uniforms.uSpace.value = space?.current ?? 0

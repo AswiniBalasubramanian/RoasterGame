@@ -3,7 +3,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Brush, Evaluator, INTERSECTION, SUBTRACTION } from 'three-bvh-csg'
 import { cutWells, loft, stationRing, type Station, type Well } from './loft'
-import { WHEELS, useStore, type VariantId } from '../store'
+import { WHEELS, useStore, type Finish, type VariantId } from '../store'
 import { Gas } from './Gas'
 
 export interface CarControl {
@@ -27,6 +27,9 @@ export interface CarControl {
 export const newControl = (): CarControl => ({ steer: 0, spin: 0, brake: 0, boost: 0, roll: 0, pitch: 0, lift: 0 })
 
 /* ------------------------------------------------------------------ geometry data */
+
+/** high quality builds a denser mesh: more sections along and around the body, rounder wheels */
+const HP = () => useStore.getState().quality === 'high'
 
 const WHEEL_R = 0.375
 const FRONT_Z = 1.28
@@ -124,10 +127,10 @@ function useWheelGeometry() {
       [0.245, -0.13], [0.32, -0.15], [0.358, -0.135], [0.374, -0.09], [0.378, 0],
       [0.374, 0.09], [0.358, 0.135], [0.32, 0.15], [0.245, 0.13],
     ].map(([x, y]) => new THREE.Vector2(x, y))
-    const tire = new THREE.LatheGeometry(tireProfile, 72)
+    const tire = new THREE.LatheGeometry(tireProfile, HP() ? 160 : 72)
     tire.rotateZ(-Math.PI / 2)
 
-    const barrel = new THREE.CylinderGeometry(0.255, 0.255, 0.27, 40, 1, true)
+    const barrel = new THREE.CylinderGeometry(0.255, 0.255, 0.27, HP() ? 96 : 40, 1, true)
     barrel.rotateZ(-Math.PI / 2)
 
     // aero disc: very shallow cone, face outward (+x)
@@ -149,7 +152,7 @@ function useWheelGeometry() {
     hub.rotateZ(-Math.PI / 2)
     hub.translate(0.142, 0, 0)
     // machined outer lip of the rim
-    const lip = new THREE.RingGeometry(0.228, 0.258, 72)
+    const lip = new THREE.RingGeometry(0.228, 0.258, HP() ? 160 : 72)
     lip.rotateY(Math.PI / 2)
     lip.translate(0.139, 0, 0)
     // inner face behind the spokes, recessed so the brake shows through
@@ -157,7 +160,7 @@ function useWheelGeometry() {
     back.rotateY(Math.PI / 2)
     back.translate(-0.02, 0, 0)
     // ventilated rotor + hat
-    const rotor = new THREE.CylinderGeometry(0.2, 0.2, 0.028, 56, 1, false)
+    const rotor = new THREE.CylinderGeometry(0.2, 0.2, 0.028, HP() ? 128 : 56, 1, false)
     rotor.rotateZ(-Math.PI / 2)
     rotor.translate(0.055, 0, 0)
     const rotorHat = new THREE.CylinderGeometry(0.095, 0.095, 0.05, 32)
@@ -169,7 +172,7 @@ function useWheelGeometry() {
     caliper.rotateY(Math.PI / 2)
     caliper.translate(0.07, 0, 0)
     // moulded lettering ring on the outer sidewall, and a hexagonal centre-lock nut
-    const wall = new THREE.RingGeometry(0.255, 0.335, 96, 1)
+    const wall = new THREE.RingGeometry(0.255, 0.335, HP() ? 192 : 96, 1)
     wall.rotateY(Math.PI / 2)
     wall.translate(0.151, 0, 0)
     const nut = new THREE.CylinderGeometry(0.04, 0.046, 0.034, 6)
@@ -326,8 +329,10 @@ export async function exportCarGLB(name = 'orbital-roadster.glb') {
 }
 
 export function Car({
-  paint, variant, control, shadows = false, beam = 0.7, gas = false, groundY,
+  paint, variant, control, shadows = false, beam = 0.7, gas = false, groundY, finishOverride,
 }: {
+  /** per-shot paint finish, layered over the garage finish without saving it */
+  finishOverride?: Partial<Finish>
   /** emit cold-gas vapour clouds from the lift modules */
   gas?: boolean
   /** world ground height the vapour rolls out across (omit in open space) */
@@ -340,7 +345,9 @@ export function Car({
   shadows?: boolean
 }) {
   const root = useRef<THREE.Group>(null)
-  const finish = useStore((st) => st.finish)
+  const finishStore = useStore((st) => st.finish)
+  const overrideKey = finishOverride ? JSON.stringify(finishOverride) : ''
+  const finish = useMemo(() => (finishOverride ? { ...finishStore, ...finishOverride } : finishStore), [finishStore, overrideKey]) // eslint-disable-line react-hooks/exhaustive-deps
   const customHex = useStore((st) => st.customHex)
   const frontL = useRef<THREE.Group>(null)
   const frontR = useRef<THREE.Group>(null)
@@ -410,7 +417,7 @@ export function Car({
 
   const bodyMesh = useMemo(() => {
     // crisp blade-like flanks: panels stay flat across, creases hold, surfaces still flow along the length
-    const body = loft(STATIONS.map(stationRing), 3, 0.45, { along: 6, across: 3, round: 0.18 })
+    const body = loft(STATIONS.map(stationRing), 3, 0.45, { along: HP() ? 12 : 6, across: HP() ? 5 : 3, round: 0.18 })
     const wells: Well[] = [
       { x: 0.96, y: WHEEL_R, z: FRONT_Z, r: 0.415, len: 0.72 },
       { x: -0.96, y: WHEEL_R, z: FRONT_Z, r: 0.415, len: 0.72 },
@@ -436,13 +443,13 @@ export function Car({
       return panel
     })
     mesh.castShadow = false
-    const band = cutWells(loft(STATIONS.map(lowerRing), 2, 0.6, { along: 6, across: 2, round: 0.3 }), cladding, linerMat, wells.map((w) => ({ ...w, r: w.r + 0.01 })))
+    const band = cutWells(loft(STATIONS.map(lowerRing), 2, 0.6, { along: HP() ? 12 : 6, across: HP() ? 3 : 2, round: 0.3 }), cladding, linerMat, wells.map((w) => ({ ...w, r: w.r + 0.01 })))
     mesh.add(band)
     return { mesh, doors }
   }, [paintMat, linerMat, cladding, trimMat])
 
   const canopy = useMemo(() => {
-    const solid = loft(CANOPY.map(canopyRing), 1, 0.7, { along: 8, across: 3, round: 0.55 })
+    const solid = loft(CANOPY.map(canopyRing), 1, 0.7, { along: HP() ? 16 : 8, across: HP() ? 6 : 3, round: 0.55 })
     // hollow it: a slightly smaller copy, dropped so it pierces the floor, leaves a ~2-3 cm glass shell
     const inner = solid.clone()
     inner.translate(0, -0.74, 0.2)
