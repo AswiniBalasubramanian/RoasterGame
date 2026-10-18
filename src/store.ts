@@ -49,7 +49,7 @@ export const VARIANTS: Record<VariantId, Variant> = {
 
 export interface Paint { id: string; name: string; hex: string }
 export const PAINTS: Paint[] = [
-  { id: 'aero', name: 'Aero Silver', hex: '#c8ccd2' },
+  { id: 'aero', name: 'Aero Silver', hex: '#d6d9de' },
   { id: 'crimson', name: 'Crimson', hex: '#c20f19' },
   { id: 'lunar', name: 'Lunar', hex: '#c9cdd3' },
   { id: 'obsidian', name: 'Obsidian', hex: '#0d0f13' },
@@ -77,7 +77,7 @@ export const WHEELS: Record<WheelId, { name: string; color: string; metal: numbe
 export const FINISHES: Record<FinishId, { name: string } & Omit<Finish, 'preset' | 'wheel'>> = {
   ceramic: { name: 'Ceramic', metalness: 0.05, roughness: 0.3, clearcoat: 1, flake: 0, iridescence: 0 },
   gloss: { name: 'Gloss', metalness: 0.25, roughness: 0.22, clearcoat: 1, flake: 0, iridescence: 0 },
-  metallic: { name: 'Metallic', metalness: 0.8, roughness: 0.27, clearcoat: 0.9, flake: 0.3, iridescence: 0 },
+  metallic: { name: 'Metallic', metalness: 0.9, roughness: 0.22, clearcoat: 1, flake: 0.25, iridescence: 0 },
   pearl: { name: 'Pearl', metalness: 0.55, roughness: 0.28, clearcoat: 1, flake: 0.3, iridescence: 0.7 },
   satin: { name: 'Satin', metalness: 0.6, roughness: 0.5, clearcoat: 0.35, flake: 0.2, iridescence: 0 },
   matte: { name: 'Matte', metalness: 0.15, roughness: 0.88, clearcoat: 0, flake: 0, iridescence: 0 },
@@ -85,13 +85,13 @@ export const FINISHES: Record<FinishId, { name: string } & Omit<Finish, 'preset'
 const defaultFinish = (): Finish => ({ preset: 'metallic', ...FINISHES.metallic, wheel: 'graphite' })
 function loadSaved(): { finish: Finish; customHex: string | null } {
   try {
-    const raw = localStorage.getItem('orbital.finish.v3')
+    const raw = localStorage.getItem('orbital.finish.v4')
     if (raw) return { finish: { ...defaultFinish(), ...JSON.parse(raw).finish }, customHex: JSON.parse(raw).customHex ?? null }
   } catch { /* storage unavailable */ }
   return { finish: defaultFinish(), customHex: null }
 }
 function save(finish: Finish, customHex: string | null) {
-  try { localStorage.setItem('orbital.finish.v3', JSON.stringify({ finish, customHex })) } catch { /* ignore */ }
+  try { localStorage.setItem('orbital.finish.v4', JSON.stringify({ finish, customHex })) } catch { /* ignore */ }
 }
 
 export type View = 'site' | 'drive'

@@ -110,11 +110,16 @@ function doorVolume(ev: Evaluator, sx: number, pad: number, m: THREE.Material) {
   return v
 }
 
-/** Satin-black lower cladding band, a few mm proud of the paint, covering sill and lower flank. */
+/**
+ * Carbon lower body, a few mm proud of the paint: a low sill along the doors that sweeps up
+ * behind them into black faceted rear haunches, as on the reference car.
+ */
 function lowerRing(s: Station): THREE.Vector3[] {
   const o = 0.007
-  const yL = s.yS + (s.yM - s.yS) * 0.42
-  const wL = s.wS + (s.wM - s.wS) * 0.42 + o
+  const rise = THREE.MathUtils.smoothstep(-s.z, 0.9, 2.27)
+  const f = 0.42 + rise * 0.4
+  const yL = s.yS + (s.yM - s.yS) * f
+  const wL = s.wS + (s.wM - s.wS) * f + o
   const R: [number, number][] = [[0, s.yB - o], [s.wB + o, s.yB - o], [s.wS + o, s.yS], [wL, yL], [0, yL]]
   const pts = R.map(([x, y]) => new THREE.Vector3(x, y, s.z))
   for (let i = 3; i >= 1; i--) pts.push(new THREE.Vector3(-R[i][0], R[i][1], s.z))
@@ -137,12 +142,12 @@ function useWheelGeometry() {
     const disc = new THREE.CylinderGeometry(0.255, 0.215, 0.03, 48)
     disc.rotateZ(-Math.PI / 2)
 
-    // six slanted star blades
+    // ten slim spokes in five split pairs
     const blades: THREE.BufferGeometry[] = []
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2
+    for (let i = 0; i < 10; i++) {
+      const a = (Math.floor(i / 2) / 5) * Math.PI * 2 + (i % 2 ? 0.13 : -0.13)
       const p = (r: number, ang: number) => new THREE.Vector2(Math.cos(ang) * r, Math.sin(ang) * r)
-      const sh = new THREE.Shape([p(0.035, a - 0.16), p(0.25, a + 0.34 - 0.07), p(0.25, a + 0.34 + 0.07), p(0.035, a + 0.16)])
+      const sh = new THREE.Shape([p(0.045, a - 0.07), p(0.25, a + 0.18 - 0.04), p(0.25, a + 0.18 + 0.04), p(0.045, a + 0.07)])
       const g = new THREE.ExtrudeGeometry(sh, { depth: 0.018, bevelEnabled: true, bevelSize: 0.004, bevelThickness: 0.004, bevelSegments: 1 })
       g.rotateY(Math.PI / 2)
       g.translate(0.138, 0, 0)
@@ -383,7 +388,7 @@ export function Car({
   const darkMetal = useMemo(() => new THREE.MeshStandardMaterial({ color: '#1b1c20', roughness: 0.4, metalness: 1 }), [])
   const rubber = useMemo(() => new THREE.MeshStandardMaterial({ color: '#141416', roughness: 0.9, metalness: 0 }), [])
   const rotorMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#7b7e84', roughness: 0.36, metalness: 1 }), [])
-  const caliperMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#7a1c17', roughness: 0.32, metalness: 0.3, clearcoat: 0.8 }), [])
+  const caliperMat = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#c21d16', roughness: 0.3, metalness: 0.25, clearcoat: 1 }), [])
   const leather = useMemo(() => new THREE.MeshStandardMaterial({ color: '#2b1d15', roughness: 0.62, metalness: 0 }), [])
   const sidewallMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#4a4b50', alphaMap: sidewall(), transparent: true, roughness: 0.75, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2 }), [])
   const grille = useMemo(() => new THREE.MeshStandardMaterial({ color: '#ffffff', map: hexMesh(), roughness: 0.55, metalness: 0.5 }), [])
@@ -391,7 +396,9 @@ export function Car({
   const lens = useMemo(() => new THREE.MeshPhysicalMaterial({ color: '#050506', roughness: 0.18, metalness: 0, clearcoat: 0.4, clearcoatRoughness: 0.2, envMapIntensity: 0.5 }), [])
   const titanium = useMemo(() => new THREE.MeshStandardMaterial({ color: '#8b8f96', roughness: 0.3, metalness: 1 }), [])
   const recess = useMemo(() => new THREE.MeshStandardMaterial({ color: '#030304', roughness: 0.8, metalness: 0.4 }), [])
-  const fanGlow = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#9fd0ff').multiplyScalar(1.3), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), [])
+  const ventGlow = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#e4ecff').multiplyScalar(1.7), toneMapped: false }), [])
+  const amber = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#ff9a2e').multiplyScalar(1.6), toneMapped: false }), [])
+  const fanGlow = useMemo(() => new THREE.MeshBasicMaterial({ color: new THREE.Color('#d6eaff').multiplyScalar(2.0), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }), [])
   const spokeMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#060607', roughness: 0.28, metalness: 0.75 }), [])
   const alloy = useMemo(() => new THREE.MeshStandardMaterial({ color: '#c3c6cc', roughness: 0.32, metalness: 1 }), [])
   const bronze = useMemo(() => new THREE.MeshStandardMaterial({ color: '#8d6b4d', roughness: 0.34, metalness: 1 }), [])
@@ -443,7 +450,7 @@ export function Car({
       return panel
     })
     mesh.castShadow = false
-    const band = cutWells(loft(STATIONS.map(lowerRing), 2, 0.6, { along: HP() ? 12 : 6, across: HP() ? 3 : 2, round: 0.3 }), cladding, linerMat, wells.map((w) => ({ ...w, r: w.r + 0.01 })))
+    const band = cutWells(loft(STATIONS.map(lowerRing), 2, 0.6, { along: HP() ? 12 : 6, across: HP() ? 3 : 2, round: 0.3 }), carbon, linerMat, wells.map((w) => ({ ...w, r: w.r + 0.01 })))
     mesh.add(band)
     return { mesh, doors }
   }, [paintMat, linerMat, cladding, trimMat])
@@ -531,10 +538,10 @@ export function Car({
       canopy.mesh.geometry.dispose()
       canopy.lines.geometry.dispose()
       canopy.doors.forEach((d) => { d.glass.geometry.dispose(); d.lines.geometry.dispose() })
-      ;[trimMat, edgeMat, paintMat, linerMat, glassMat, carbon, darkMetal, rubber, spokeMat, alloy, bronze, lightBar, redGlow, jetMat, cladding, rimMat, chrome, cabinGlow, plumeMat, rotorMat, caliperMat, leather, lens, titanium, recess, fanGlow, sidewallMat, grille, tailSeg].forEach((m) => m.dispose())
+      ;[trimMat, edgeMat, paintMat, linerMat, glassMat, carbon, darkMetal, rubber, spokeMat, alloy, bronze, lightBar, redGlow, jetMat, cladding, rimMat, chrome, cabinGlow, plumeMat, rotorMat, caliperMat, leather, lens, titanium, recess, fanGlow, sidewallMat, grille, tailSeg, ventGlow, amber].forEach((m) => m.dispose())
       Object.values(wheel).flat().forEach((g) => (g as THREE.BufferGeometry).dispose())
     }
-  }, [bodyMesh, canopy, trimMat, edgeMat, paintMat, linerMat, glassMat, carbon, darkMetal, rubber, spokeMat, alloy, bronze, lightBar, redGlow, jetMat, cladding, rimMat, chrome, cabinGlow, plumeMat, rotorMat, caliperMat, leather, lens, titanium, recess, fanGlow, sidewallMat, grille, tailSeg, wheel])
+  }, [bodyMesh, canopy, trimMat, edgeMat, paintMat, linerMat, glassMat, carbon, darkMetal, rubber, spokeMat, alloy, bronze, lightBar, redGlow, jetMat, cladding, rimMat, chrome, cabinGlow, plumeMat, rotorMat, caliperMat, leather, lens, titanium, recess, fanGlow, sidewallMat, grille, tailSeg, ventGlow, amber, wheel])
 
   useFrame((_, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
@@ -571,7 +578,7 @@ export function Car({
     doorPivots.current.forEach((g, k) => {
       if (g) g.rotation.set(dOpen * DOOR_LIFT, 0, (k ? -1 : 1) * dOpen * DOOR_CANT)
     })
-    fanGlow.opacity = THREE.MathUtils.damp(fanGlow.opacity, lift * 0.5, 8, dt)
+    fanGlow.opacity = THREE.MathUtils.damp(fanGlow.opacity, lift > 0.02 ? 0.4 + lift * 0.6 : 0, 8, dt)
     fanRotors.current.forEach((g, k) => { if (g) g.rotation.y += dt * (6 + lift * 30) * (k ? -1 : 1) })
     if (jets.current) {
       const f = 0.7 + Math.sin(performance.now() * 0.06) * 0.2
@@ -581,7 +588,7 @@ export function Car({
 
   const wingCfg = {
     sport: { w: 1.5, d: 0.42, y: 1.0, z: -2.3, end: 0.08, pylonH: 0.14 },
-    velocity: { w: 1.78, d: 0.54, y: 1.1, z: -2.32, end: 0.14, pylonH: 0.24 },
+    velocity: { w: 2.02, d: 0.58, y: 1.22, z: -2.32, end: 0.16, pylonH: 0.34 },
     apex: { w: 1.96, d: 0.7, y: 1.2, z: -2.34, end: 0.26, pylonH: 0.34 },
   }[variant]
 
@@ -625,7 +632,8 @@ export function Car({
     )
   }
 
-  const fans = [-0.375, -0.125, 0.125, 0.375]
+  /** x of the three rear thrust vents */
+  const fans = [-0.44, 0, 0.44]
 
   return (
     <group ref={root} name="orbital-roadster" castShadow={shadows}>
@@ -654,6 +662,12 @@ export function Car({
             </mesh>
           ))}
         </group>
+      ))}
+      {/* amber side markers behind the front wheels */}
+      {[1, -1].map((sx) => (
+        <mesh key={`am${sx}`} material={amber} position={[sx * 1.008, 0.6, 0.78]}>
+          <boxGeometry args={[0.006, 0.012, 0.14]} />
+        </mesh>
       ))}
       {/* camera pods on the fender crowns in place of mirrors */}
       {[1, -1].map((sx) => (
@@ -706,6 +720,12 @@ export function Car({
       <mesh material={redGlow} position={[0, 0.733, -2.286]}>
         <boxGeometry args={[1.46, 0.004, 0.004]} />
       </mesh>
+      <mesh material={lens} position={[0, 0.69, -2.288]}>
+        <boxGeometry args={[1.5, 0.026, 0.01]} />
+      </mesh>
+      <mesh material={redGlow} position={[0, 0.69, -2.295]}>
+        <boxGeometry args={[1.44, 0.01, 0.005]} />
+      </mesh>
       {/* black rear fascia with a hex-mesh grille under the light */}
       <mesh material={cladding} position={[0, 0.565, -2.275]}>
         <boxGeometry args={[1.56, 0.27, 0.03]} />
@@ -717,23 +737,28 @@ export function Car({
       <mesh material={carbon} position={[0, 0.15, -1.98]} rotation={[0.18, 0, 0]}>
         <boxGeometry args={[1.5, 0.018, 0.62]} />
       </mesh>
-      {[-0.6, -0.3, 0, 0.3, 0.6].map((x) => (
-        <mesh key={`fin${x}`} material={carbon} position={[x, 0.22, -2.0]} rotation={[0.18, 0, 0]}>
-          <boxGeometry args={[0.014, 0.15, 0.58]} />
-        </mesh>
-      ))}
-      {/* quad rear cold-gas nozzles: titanium tube, dark recessed throat */}
+      {/* carbon rear panel closing the gap under the tail, carrying three lit thrust vents */}
+      <mesh material={carbon} position={[0, 0.285, -2.262]}>
+        <boxGeometry args={[1.5, 0.27, 0.03]} />
+      </mesh>
       {fans.map((x) => (
-        <group key={`t${x}`} position={[x, 0.42, -2.3]} rotation={[Math.PI / 2, 0, 0]}>
-          <mesh material={titanium}>
-            <cylinderGeometry args={[0.05, 0.054, 0.1, 28, 1, true]} />
+        <group key={`v${x}`} position={[x, 0.29, -2.281]}>
+          <mesh material={recess}>
+            <boxGeometry args={[0.34, 0.15, 0.012]} />
           </mesh>
-          <mesh material={recess} position={[0, 0.02, 0]}>
-            <cylinderGeometry args={[0.042, 0.042, 0.06, 20]} />
-          </mesh>
+          {[-1, 1].map((s) => (
+            <mesh key={s} material={ventGlow} position={[s * 0.08, 0.005, -0.008]} rotation={[0, 0, s * -0.42]}>
+              <boxGeometry args={[0.19, 0.009, 0.006]} />
+            </mesh>
+          ))}
+          {[-1, 1].map((s) => (
+            <mesh key={`f${s}`} material={carbon} position={[s * 0.17, 0, -0.01]}>
+              <boxGeometry args={[0.012, 0.15, 0.02]} />
+            </mesh>
+          ))}
         </group>
       ))}
-      <group ref={jets} position={[0, 0.42, -2.36]}>
+      <group ref={jets} position={[0, 0.29, -2.33]}>
         {fans.map((x) => (
           <mesh key={`j${x}`} material={jetMat} position={[x, 0, -0.5]} rotation={[-Math.PI / 2, 0, 0]}>
             <coneGeometry args={[0.055, 1.0, 12, 1, true]} />
@@ -747,8 +772,8 @@ export function Car({
           <mesh key={s} geometry={pylonGeo} material={carbon} position={[s * 0.5, 0, 0.08]} />
         ))}
         <mesh geometry={wingGeo} material={paintMat} rotation={[-0.09, 0, 0]} />
-        <mesh material={redGlow} position={[0, -0.002, -wingCfg.d / 2 - 0.004]} rotation={[-0.09, 0, 0]}>
-          <boxGeometry args={[wingCfg.w * 0.94, 0.02, 0.01]} />
+        <mesh material={redGlow} position={[0, -0.002, -wingCfg.d / 2 - 0.006]} rotation={[-0.09, 0, 0]}>
+          <boxGeometry args={[wingCfg.w * 0.96, 0.03, 0.014]} />
         </mesh>
         {[-1, 1].map((s) => (
           <group key={`e${s}`} position={[s * (wingCfg.w / 2), 0.0, 0]}>
