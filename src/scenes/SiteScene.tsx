@@ -48,6 +48,8 @@ export function SiteScene() {
   const s = useRef(0)
   const t0 = useRef<number | null>(null)
   const reduce = useMemo(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches, [])
+  // ?poster: a still, art-directed frame for social images (doors open, low rear three-quarter)
+  const poster = useMemo(() => new URLSearchParams(location.search).has('poster'), [])
   const lift = useRef(0)
   const carPos = useRef(new THREE.Vector3())
   const shadow = useRef<THREE.Group>(null)
@@ -100,7 +102,7 @@ export function SiteScene() {
   useFrame((state, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05)
     const now = performance.now()
-    if (t0.current === null) t0.current = reduce ? now - 6000 : now
+    if (t0.current === null) t0.current = reduce || poster ? now - 6000 : now
 
     // scroll -> section progress (0 hero, 1 garage, 2 final)
     const vh = window.innerHeight
@@ -205,7 +207,15 @@ export function SiteScene() {
     tmp.r.crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize()
     camera.lookAt(tmp.l.clone().addScaledVector(tmp.r, shift))
     const cam = camera as THREE.PerspectiveCamera
-    const fov = THREE.MathUtils.lerp(a.fov, b.fov, f)
+    let fov = THREE.MathUtils.lerp(a.fov, b.fov, f)
+    if (poster) {
+      control.current.doors = 1
+      const q = new URLSearchParams(location.search)
+      const n = (k: string, d: number) => (q.has(k) ? parseFloat(q.get(k)!) : d)
+      camera.position.set(n('cx', 6.4), n('cy', 1.35), n('cz', -5.6))
+      camera.lookAt(n('lx', 0.6), n('ly', 2.45), n('lz', -0.3))
+      fov = n('fov', 30)
+    }
     if (Math.abs(cam.fov - fov) > 0.01) {
       cam.fov = fov
       cam.updateProjectionMatrix()

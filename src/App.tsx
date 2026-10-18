@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
-import { Bloom, EffectComposer, ToneMapping, Vignette } from '@react-three/postprocessing'
+import { Bloom, EffectComposer, N8AO, ToneMapping, Vignette } from '@react-three/postprocessing'
 import { ToneMappingMode } from 'postprocessing'
 import * as THREE from 'three'
 import { useStore } from './store'
@@ -29,6 +29,8 @@ function Effects() {
   if (quality === 'low') return null
   return (
     <EffectComposer multisampling={quality === 'high' ? 4 : 0} enableNormalPass={false}>
+      {/* ambient occlusion: contact darkening in panel gaps, arches, vents and the cabin, what makes CGI read as a physical object */}
+      <N8AO aoRadius={0.5} distanceFalloff={0.5} intensity={quality === 'high' ? 2.4 : 1.8} quality={quality === 'high' ? 'high' : 'low'} halfRes={quality !== 'high'} />
       {/* restrained: only genuinely bright lights (lamps, light bars) cross the threshold */}
       <Bloom intensity={quality === 'high' ? 0.3 : 0.24} luminanceThreshold={1.15} luminanceSmoothing={0.15} mipmapBlur radius={0.6} />
       <Vignette offset={0.3} darkness={0.42} />
